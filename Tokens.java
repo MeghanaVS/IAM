@@ -1,9 +1,6 @@
 package com.iam;
 
-import java.text.ParseException;
-
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.client.Client;
@@ -28,34 +25,40 @@ public class Tokens {
  @GET
  @Path("/sso")
  @Produces("application/json")
- public Response getSSOToken(){
+ public Response getSSOToken() throws JSONException{
       client = clientBuilder.withConfig(config).build();
-      WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json/ManagedPeople/authenticate");
+      WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/authenticate");
      Response response = webTarget.request().header("X-OpenAM-Username",USERNAME).header("X-OpenAM-Password", PASSWORD)
              .header("Content-Type", "application/json").post(Entity.json(""));
-     System.out.println(response);
      String str = response.readEntity(String.class);
-     System.out.println(str);
      JSONObject jsonObj = null;
-     String tokenId = null;
-         try {
-             jsonObj = new JSONObject(str);
-             tokenId = jsonObj.get("tokenId").toString();
-         } catch (JSONException e) {
-             // TODO Auto-generated catch block
-             e.printStackTrace();
-         }
-     return Response.ok().entity(tokenId).build();
-             //response.readEntity(SSOTokenResponse.class);
- 
+         jsonObj = new JSONObject(str);
+         String tokenId = jsonObj.get("tokenId").toString();
+     return Response.status(200).entity(str).build();
+             //response.readEntity(SSOTokenResponse.class);  
+ }
+ public String getSSOTokenOnly() throws JSONException{
+      Response resp=getSSOToken();
+      String tokenJsonString = resp.getEntity().toString();
+      JSONObject tokenJson = new JSONObject(tokenJsonString);
+      String token = tokenJson.get("tokenId").toString();
+      return token;
  }
  
- public String getSSOtokenOnly() throws JSONException{
-	 Response response = getSSOToken();
-	 String str = response.getEntity().toString();
-	 JSONObject jsonObj = new JSONObject(str);
-     String tokenId = jsonObj.get("tokenId").toString();
-     
-     return tokenId;
+ @GET
+ @Path("/admin")
+ @Produces("application/json")
+ public String getAdminSSOToken() throws JSONException{
+     client = clientBuilder.withConfig(config).build();
+     WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/authenticate");
+    Response response = webTarget.request().header("X-OpenAM-Username","amadmin").header("X-OpenAM-Password", "TycoNET12")
+            .header("Content-Type", "application/json").post(Entity.json(""));
+    String str = response.readEntity(String.class);
+    JSONObject jsonObj = null;
+        jsonObj = new JSONObject(str);
+        String tokenId = jsonObj.get("tokenId").toString();
+        System.out.println(tokenId);
+		return tokenId;
  }
+ 
 }
