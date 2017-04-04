@@ -31,10 +31,8 @@ public class UserOperations {
 	 ClientBuilder clientBuilder = ClientBuilder.newBuilder();
 	 ClientConfig config = new ClientConfig();
 	 public Client client = clientBuilder.withConfig(config).build();
-	 static Tokens token = new Tokens();
+	 //static Tokens token = new Tokens();
 	 ObjectMapper mapper = new ObjectMapper();
-	 
-	 
 	 static UserAttributes user = new UserAttributes();
 	 
 	 @GET
@@ -42,7 +40,7 @@ public class UserOperations {
 	 @Produces("application/json")
 	 public Response createUser() throws JsonProcessingException, JSONException{
 	
-		 String tokens = token.getSSOTokenOnly();
+		 String tokens = Tokens.getAdminSSOToken();
 		 Random rand=new Random(); 
 		 int r = rand.nextInt(100000-1)+1;
 		 
@@ -73,9 +71,7 @@ public class UserOperations {
          String data = mapper.writeValueAsString(user);
          WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users").queryParam("_action","create");
          Response response = webTarget.request().header("iplanetDirectoryPro",tokens).header("Content-Type","application/json").post(Entity.json(data));
-		 /*String str = response.readEntity(String.class);
-		 System.out.println(str);*/
-		 
+         
 	      return Response.ok().entity(user.getUid()).build();
   }
 	 
@@ -87,12 +83,10 @@ public class UserOperations {
 		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/sessions/").path(tokens)
                  .queryParam("_action", "validate");
          Response response = webTarget.request().header("Content-Type","application/json").post(Entity.json(""));
-         //System.out.println(response);
          String str = response.readEntity(String.class);
-		 //System.out.println(str);
 		 JSONObject jsonObj = new JSONObject(str);
          String uid = jsonObj.get("uid").toString();
-         return Response.ok().entity(uid).build();
+         return Response.ok().entity(str).build();
 		 
 	 }
 	 
@@ -101,14 +95,12 @@ public class UserOperations {
 	 @Produces("application/json")
 	 public Response deleteuser(@PathParam("uid") String uid) throws JSONException{
 		 
-		 String admintoken = token.getAdminSSOToken();
+		 String admintoken = Tokens.getAdminSSOToken();
 		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users/").path(uid);
 		 Response response = webTarget.request().header("iplanetDirectoryPro",admintoken).header("Content-Type","application/json").delete();
-		 System.out.println(response);
 		 String str = response.readEntity(String.class);
 		 JSONObject jsonObj = new JSONObject(str);
-		 //return Response.status(200).entity(Messages.DELETED).build();
-		 //return Response.status(ServerResponse.getStatus()).entity(str).build();
+		 
 		 return Response.ok().entity(str).build();
 		 
 	 }
@@ -128,16 +120,49 @@ public class UserOperations {
 		try {
 			data = mapper.writeValueAsString(user);
 		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		 String tokens = token.getSSOTokenOnly();
+		 String tokens = Tokens.getAdminSSOToken();
 		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users/").path(uid);
          Response response = webTarget.request().header("iplanetDirectoryPro",tokens).header("Content-Type","application/json").put(Entity.json(data));
-         System.out.println(response);
          String str = response.readEntity(String.class);
 		 JSONObject jsonObj = new JSONObject(str);
 		 
          return Response.ok().entity(str).build();
 	 }
+	 
+	 @GET
+	 @Path("/updatepwd/{token}")
+	 @Produces("application/json")
+	 public Response updateuserpassword(@PathParam("token") String token) throws JSONException, JsonProcessingException{
+	
+		 Random rand=new Random(); 
+		 int r = rand.nextInt(100000-1)+1;
+		 mapper.setSerializationInclusion(Include.NON_EMPTY);
+
+		 String userid = UserModel.getUidFromSSOToken(token); 
+		 String oldPassword = "tyco@123";
+		 String newPassword = "PESIT"+r;
+		 ChangePassword changePassword = new ChangePassword(oldPassword, newPassword);
+		 
+		 String data = mapper.writeValueAsString(changePassword);
+		 System.out.println(data);
+		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users/").path(userid).queryParam("_action", "changePassword");
+		 Response response = webTarget.request().header("iplanetDirectoryPro",Tokens.getAdminSSOToken()).header("Content-Type","application/json").post(Entity.json(data));
+         //String str = response.readEntity(String.class);
+         //return Response.ok().entity(str).build(); -> returns {}
+		 return Response.status(response.getStatus()).entity(Messages.UPDATEPWD).build();
+	 }
+
+	/* @GET
+	 @Path("/self/{token}")
+	 @Produces("application/json")
+	 public Response RegisterUser(@PathParam("token") String token){
+		 
+		return null;
+		 
+	 }*/
+	 
+	 
+	 
 }
