@@ -35,4 +35,29 @@ public class UserModel {
 		return uid;
 	}
 	
+	public static UserEmailAttributes GenerateUserEmailConfirmation(UserAttributes user){
+		
+		UserEmailAttributes useremailattributes = new UserEmailAttributes();
+		/*useremailattributes.setTokenId(token);
+		useremailattributes.setEmail(user.getMail());
+		useremailattributes.setConfirmationId(confirmationId);*/
+        
+        return useremailattributes;
+		
+	}
+	
+	/*public static String getSSOtokenForUser(String username, String password ) throws JSONException{
+		String USERNAME = username;
+		String PASSWORD = password;
+		client = clientBuilder.withConfig(config).build();
+	    WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/authenticate");
+	    Response response = webTarget.request().header("X-OpenAM-Username",USERNAME).header("X-OpenAM-Password", PASSWORD)
+	            .header("Content-Type", "application/json").post(Entity.json(""));
+	    String str = response.readEntity(String.class);
+	    JSONObject jsonObj = new JSONObject(str);
+	    String usertokenId = jsonObj.get("tokenId").toString();
+	   // System.out.println("hello");
+	    return usertokenId;
+	}*/
+	
 }
