@@ -69,17 +69,12 @@ public class UserOperations {
 		 user.setSecret("PESIT");
 		 
          String data = mapper.writeValueAsString(user);
-         JSONObject jsonObj = new JSONObject(data);
-         String username = jsonObj.get("username").toString();
-         String userpassword = jsonObj.get("userpassword").toString();
-         System.out.println(username + "  " + userpassword); 
-         /*String userSSOToken = UserModel.getSSOtokenForUser(username,userpassword);
-         System.out.println("uid --> " + uid + " SSOtoken --> " + userSSOToken);
-         */
+         
          WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users").queryParam("_action","create");
          Response response = webTarget.request().header("iplanetDirectoryPro",tokens).header("Content-Type","application/json").post(Entity.json(data));
-         
-	      return Response.ok().entity(user.getUid()).build();
+         String userSSOToken = UserModel.getSSOtokenForUser(user.getUsername(),user.getUserpassword());
+         //System.out.println("uid --> " + uid + " SSOtoken --> " + userSSOToken);
+	      return Response.status(response.getStatus()).entity(user.getUid()).build();
   }
 	 
 	 @GET
@@ -122,7 +117,7 @@ public class UserOperations {
 		 mapper.setSerializationInclusion(Include.NON_EMPTY);
 		 
 		 user.setPostalAddress("PESIT"+r);
-		 user.setMail(r+"@gmail.com");
+		 user.setPreferredLanguage("Hindi");
 		 String data=null;
 		try {
 			data = mapper.writeValueAsString(user);
@@ -179,55 +174,64 @@ public class UserOperations {
 	 @GET
 	 @Path("/self")
 	 @Produces("application/json")
-	 public Response RegisterUser() throws JsonProcessingException{
+	 public Response RegisterUser() throws JSONException{
 		 
 		 Random rand=new Random(); 
 		 int r = rand.nextInt(100000-1)+1;
 		 String uid = UUID.randomUUID().toString();
+		 emailAttributes self = new emailAttributes();
 		 
-		 user.setUsername(uid);
-		 user.setUid(uid);
-		 user.setMiddleName("IAM");
-		 user.setCn(uid);
-		 user.setPreferredLanguage("English");
-		 user.setUsername(uid);
-		 user.setUserpassword("tyco@123");
-		 user.setMail(r+"@gmail.com");
-		 user.setIsRegistering("false");
-		 user.setInetuserstatus("active");
-		 user.setPostalAddress("PESIT");
-		 user.setTelephoneNumber(String.valueOf(r));
-		 user.setSn("IAM");
-		 user.setPasswordPolicy("iam@1234");
-		 user.setSecurityQuestion1("what's your favourite colour?");
-		 user.setSecurityQuestion2("what's your place name?");
-		 user.setSecurityQuestion3("what's your PAN card number?");
-		 user.setSecurityAnswer1("black");
-		 user.setSecurityAnswer2("bengaluru");
-		 user.setSecurityAnswer3("IAM1234IAM");
-		 user.setSecret("PESIT");
+		 self.setUsername(uid);
+		 self.setUid(uid);
+		 self.setMiddleName("IAM");
+		 self.setCn(uid);
+		 self.setPreferredLanguage("English");
+		 self.setUsername(uid);
+		 self.setUserpassword("tyco@123");
+		 self.setEmail("iamprojectdemo@gmail.com");
+		 self.setIsRegistering("false");
+		 self.setInetuserstatus("Inctive");
+		 self.setPostalAddress("PESIT");
+		 self.setTelephoneNumber(String.valueOf(r));
+		 self.setSn("IAM");
+		 self.setPasswordPolicy("iam@1234");
+		 self.setSecurityQuestion1("what's your favourite colour?");
+		 self.setSecurityQuestion2("what's your place name?");
+		 self.setSecurityQuestion3("what's your PAN card number?");
+		 self.setSecurityAnswer1("black");
+		 self.setSecurityAnswer2("bengaluru");
+		 self.setSecurityAnswer3("IAM1234IAM");
+		 self.setSecret("PESIT");
 		 
-         String data = mapper.writeValueAsString(user);
-         /*String userSSOToken = UserModel.getSSOtokenForUser(user.getUsername(),user.getUserpassword());
-         System.out.println(uid + " SSOtoken --> " + userSSOToken);*/
-         //if user with this email exists and is still in registration state then just re send the confirmation email
-         boolean emailexists = LDAPconnections.doesEmailExists(user.getMail());
-		 if(emailexists){
-			 String userid = null;
-			try {
-				userid = LDAPconnections.getUserIDbyMail(user.getMail());
-			} catch (SearchResultReferenceIOException e) {
-				e.printStackTrace();
-			} 
-			 user.setUsername(userid);
-		 }
-		 UserEmailAttributes UserEmailAttributes = UserModel.GenerateUserEmailConfirmation(user);
-		 
-		 return Response.ok().entity(UserEmailAttributes).build();
-
-		 
+         String data = null;
+		try {
+			data = mapper.writeValueAsString(self);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+         System.out.println(data);
+         WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/ManagedPeople").path("/users").queryParam("_action","register");
+         Response response = webTarget.request().header("Content-Type","application/json").post(Entity.json(data));
+         
+         String str = response.readEntity(String.class);;
+		 System.out.println(str);
+         return Response.ok().entity(str).build();
+  
 	 }
-	 
-	 
+         
+/*	 @GET
+	 @Path("/forgotpwd/{email}")
+	 @Produces("application/json")
+	 public Response ForgotUserPassword(@PathParam("email") String email){
+		 
+		 String json_body;
+		 String stage = "INITIAL_STAGE";
+		 try {
+			String userid = LDAPconnections.getUserIDbyMail(email);
+		} catch (SearchResultReferenceIOException e) {
+			e.printStackTrace();
+		}
+		 
+	 }*/
 	 
 }
