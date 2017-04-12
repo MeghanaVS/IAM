@@ -219,19 +219,58 @@ public class UserOperations {
   
 	 }
          
-/*	 @GET
+	 @GET
 	 @Path("/forgotpwd/{email}")
 	 @Produces("application/json")
 	 public Response ForgotUserPassword(@PathParam("email") String email){
+		
+		 ForgotPasswordAttributes forg = new ForgotPasswordAttributes();
+
+		 forg.setEmail(email);
+		 forg.setSubject("Reset your forgotten password with IAM");
+		 forg.setMessage("Follow this link to reset your password");
 		 
-		 String json_body;
-		 String stage = "INITIAL_STAGE";
-		 try {
-			String userid = LDAPconnections.getUserIDbyMail(email);
-		} catch (SearchResultReferenceIOException e) {
-			e.printStackTrace();
-		}
+		 String data = null;
+			try {
+				data = mapper.writeValueAsString(forg);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/users").queryParam("_action", "forgotPassword");
+		 Response response = webTarget.request().header("Content-Type","application/json").post(Entity.json(data));
 		 
-	 }*/
+		 String str = response.readEntity(String.class);;
+		 System.out.println(str);
+         return Response.ok().entity(str).build();
+	
+	 }
+	 
+	 @GET
+	 @Path("/pwdreset")
+	 @Produces("application/json")
+	 public Response ForgotPasswordReset(){
+		
+		 ForgotPasswordAttributes forg = new ForgotPasswordAttributes();
+
+		 forg.setUsername("meghana");
+		 forg.setConfirmationId("omPUqcF5pJh4g15OZ7VIr7DjgVU=");
+		 forg.setTokenId("XPKrwXQ4NLj9zlr+acHpz4fov0I=");
+		 forg.setUserpassword("tyco@123");
+		 
+		 String data = null;
+			try {
+				data = mapper.writeValueAsString(forg);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		 WebTarget webTarget = client.target("http://openam.dev.project.net:8080/openam/json").path("/users").queryParam("_action", "forgotPasswordReset");
+		 Response response = webTarget.request().header("Content-Type","application/json").post(Entity.json(data));
+		 
+		 String str = response.readEntity(String.class);;
+		 System.out.println(str);
+         return Response.ok().entity(str).build();
+	
+	 }
+	 
 	 
 }
